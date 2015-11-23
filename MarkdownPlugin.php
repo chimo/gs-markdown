@@ -6,7 +6,7 @@ if (!defined('GNUSOCIAL')) {
 
 class MarkdownPlugin extends Plugin
 {
-    const VERSION = '0.0.1';
+    const VERSION = '0.0.2';
 
     function onStartNoticeSave($notice)
     {
@@ -20,15 +20,15 @@ class MarkdownPlugin extends Plugin
             $text = common_remove_unicode_formatting($text);
             $text = preg_replace('/[\x{0}-\x{8}\x{b}-\x{c}\x{e}-\x{19}]/', '', $text);
 
-            // Convert Markdown to HTML
-            $rendered = \Michelf\Markdown::defaultTransform($text);
-
             // Link #hashtags
             $rendered = preg_replace_callback('/(^|\&quot\;|\'|\(|\[|\{|\s+)#([\pL\pN_\-\.]{1,64})/u',
-            function ($m) { return "{$m[1]}#".common_tag_link($m[2]); }, $rendered);
+            function ($m) { return "{$m[1]}#".common_tag_link($m[2]); }, $text);
 
             // Link @mentions, !mentions, @#mentions
-            $notice->rendered = common_linkify_mentions($rendered, $notice);
+            $rendered = common_linkify_mentions($rendered, $notice);
+
+            // Convert Markdown to HTML
+            $notice->rendered = \Michelf\Markdown::defaultTransform($rendered);
         }
 
         return true;
