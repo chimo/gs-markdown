@@ -27,6 +27,16 @@ class MarkdownPlugin extends Plugin
             // Link @mentions, !mentions, @#mentions
             $rendered = common_linkify_mentions($rendered, $notice);
 
+            // Prevent leading #hashtags from becoming headers by adding a backslash
+            // before the "#", telling markdown to leave it alone
+            // $repl_rendered = preg_replace('/^#[\pL\pN_\-\.]{1,64}/u', 'replaced!', $rendered);
+            $repl_rendered = preg_replace('/^#<span class="tag">/u', '\\\\\\0', $rendered);
+
+            // Only use the replaced value from above if it returned a success
+            if ($rendered !== null) {
+                $rendered = $repl_rendered;
+            }
+
             // Convert Markdown to HTML
             $notice->rendered = \Michelf\Markdown::defaultTransform($rendered);
         }
