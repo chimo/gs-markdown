@@ -44,7 +44,7 @@ class MarkdownPlugin extends Plugin
         return true;
     }
 
-    function onPluginVersion(&$versions)
+    function onPluginVersion(array &$versions)
     {
         $versions[] = array('name' => 'Markdown',
                             'version' => self::VERSION,
