@@ -6,7 +6,7 @@ if (!defined('GNUSOCIAL')) {
 
 class MarkdownPlugin extends Plugin
 {
-    const VERSION = '0.0.3';
+    const VERSION = '0.0.4';
 
     function onStartNoticeSave($notice)
     {
@@ -42,6 +42,11 @@ class MarkdownPlugin extends Plugin
         }
 
         return true;
+    }
+
+    function onEndShowStyles($action)
+    {
+        $action->cssLink($this->path('css/markdown.css'));
     }
 
     function onPluginVersion(array &$versions)
