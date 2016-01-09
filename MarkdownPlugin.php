@@ -6,7 +6,7 @@ if (!defined('GNUSOCIAL')) {
 
 class MarkdownPlugin extends Plugin
 {
-    const VERSION = '0.0.2';
+    const VERSION = '0.0.3';
 
     function onStartNoticeSave($notice)
     {
@@ -25,7 +25,7 @@ class MarkdownPlugin extends Plugin
             function ($m) { return "{$m[1]}#".common_tag_link($m[2]); }, $text);
 
             // Link @mentions, !mentions, @#mentions
-            $rendered = common_linkify_mentions($rendered, $notice);
+            $rendered = common_linkify_mentions($rendered, $notice->getProfile(), $notice->hasParent() ? $notice->getParent() : null);
 
             // Prevent leading #hashtags from becoming headers by adding a backslash
             // before the "#", telling markdown to leave it alone
