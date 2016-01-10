@@ -24,8 +24,11 @@ class MarkdownPlugin extends Plugin
             $rendered = preg_replace_callback('/(^|\&quot\;|\'|\(|\[|\{|\s+)#([\pL\pN_\-\.]{1,64})/u',
             function ($m) { return "{$m[1]}#".common_tag_link($m[2]); }, $text);
 
-            // Link @mentions, !mentions, @#mentions
-            $rendered = common_linkify_mentions($rendered, $notice->getProfile(), $notice->hasParent() ? $notice->getParent() : null);
+            // Some types of notices do not have the hasParent() method, but they're not notices we are interested in
+            if (method_exists($notice, 'hasParent')) {
+                // Link @mentions, !mentions, @#mentions
+                $rendered = common_linkify_mentions($rendered, $notice->getProfile(), $notice->hasParent() ? $notice->getParent() : null);
+            }
 
             // Prevent leading #hashtags from becoming headers by adding a backslash
             // before the "#", telling markdown to leave it alone
