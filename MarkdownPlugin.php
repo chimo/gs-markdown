@@ -26,10 +26,12 @@ class MarkdownPlugin extends Plugin
 
     function onStartNoticeSave($notice)
     {
+        $text = common_strip_html($notice->rendered, true, true);
+
         // Only run this on local notices
         if ($notice->isLocal()) {
 
-            $rendered = $this->render_text($notice->content);
+            $rendered = $this->render_text($text);
 
             // Some types of notices do not have the hasParent() method, but they're not notices we are interested in
             if (method_exists($notice, 'hasParent')) {
