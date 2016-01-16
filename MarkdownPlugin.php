@@ -24,6 +24,19 @@ class MarkdownPlugin extends Plugin
         return $rendered;
     }
 
+    // See: https://github.com/chimo/gs-markdown/issues/10
+    function fix_whitespace($rendered)
+    {
+        // Remove <p>s
+        $rendered = str_replace('<p>', '', $rendered);
+
+        // Replace </p>s with <br><br>
+        $rendered = str_replace('</p>', '<br><br>', $rendered);
+
+        // Remove trailing <br><br>
+        return preg_replace('/<br><br>$/', '', $rendered);
+    }
+
     function onStartNoticeSave($notice)
     {
         $text = common_strip_html($notice->rendered, true, true);
@@ -49,7 +62,9 @@ class MarkdownPlugin extends Plugin
             }
 
             // Convert Markdown to HTML
-            $notice->rendered = \Michelf\Markdown::defaultTransform($rendered);
+            $rendered = \Michelf\Markdown::defaultTransform($rendered);
+
+            $notice->rendered = $this->fix_whitespace($rendered);
         }
 
         return true;
