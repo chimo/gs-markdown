@@ -4,9 +4,12 @@ if (!defined('GNUSOCIAL')) {
     exit(1);
 }
 
+// Composer
+require __DIR__ . '/vendor/autoload.php';
+
 class MarkdownPlugin extends Plugin
 {
-    const VERSION = '0.0.4';
+    const VERSION = '0.0.5';
 
     // From /lib/util.php::common_render_text
     // We don't want to call it directly since we don't want to
@@ -62,7 +65,16 @@ class MarkdownPlugin extends Plugin
             }
 
             // Convert Markdown to HTML
-            $rendered = \Michelf\Markdown::defaultTransform($rendered);
+            // TODO: Abstract the parser so we can call the same method regardless of lib
+            switch($this->parser) {
+                case 'gfm':
+                    $this->parser = new \cebe\markdown\GithubMarkdown();
+                    $rendered = $this->parser->parse($rendered);
+                    break;
+                default:
+                    $this->parser = new \Michelf\Markdown();
+                    $rendered = $this->parser->defaultTransform($rendered);
+            }
 
             $notice->rendered = $this->fix_whitespace($rendered);
         }
