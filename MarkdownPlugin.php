@@ -4,12 +4,9 @@ if (!defined('GNUSOCIAL')) {
     exit(1);
 }
 
-// Composer
-require __DIR__ . '/vendor/autoload.php';
-
 class MarkdownPlugin extends Plugin
 {
-    const VERSION = '0.0.5';
+    const VERSION = '0.0.6';
 
     // From /lib/util.php::common_render_text
     // We don't want to call it directly since we don't want to
@@ -68,6 +65,9 @@ class MarkdownPlugin extends Plugin
             // TODO: Abstract the parser so we can call the same method regardless of lib
             switch($this->parser) {
                 case 'gfm':
+                    // Composer
+                    require __DIR__ . '/vendor/autoload.php';
+
                     $this->parser = new \cebe\markdown\GithubMarkdown();
                     $rendered = $this->parser->parse($rendered);
                     break;
