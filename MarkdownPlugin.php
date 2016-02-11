@@ -6,7 +6,7 @@ if (!defined('GNUSOCIAL')) {
 
 class MarkdownPlugin extends Plugin
 {
-    const VERSION = '0.0.6';
+    const VERSION = '0.0.7';
 
     // From /lib/util.php::common_render_text
     // We don't want to call it directly since we don't want to
@@ -37,9 +37,45 @@ class MarkdownPlugin extends Plugin
         return preg_replace('/<br><br>$/', '', $rendered);
     }
 
+
+    /**
+     * Replace double <br>s with a line-break
+     *
+     * The following input:
+     *      Foo
+     *
+     *      * list
+     *      * item
+     *
+     * Has `$notice->rendered` like this:
+     *      Foo<br><br>
+     *      * list<br>
+     *      * item
+     *
+     * Turns into this after `common_strip_html()`:
+     *      Foo
+     *      * list
+     *      * item
+     *
+     * So we lose the blank line required by markdown to parse
+     * the input as a list.
+     *
+     * This method takes the original `$notice->rendered` and makes it like this:
+     *      Foo
+     *
+     *      * list<br>
+     *      * item<br>
+     *
+     * The remaining <br>s are taken care of by `common_strip_html()`
+     */
+	function br2nl ($string)
+	{
+        return preg_replace('/(\<br(\s*)?\/?\>){2}/i', PHP_EOL, $string);
+	}
+
     function onStartNoticeSave($notice)
     {
-        $text = common_strip_html($notice->rendered, true, true);
+        $text = common_strip_html($this->br2nl($notice->rendered), true, true);
 
         // Only run this on local notices
         if ($notice->isLocal()) {
@@ -76,7 +112,7 @@ class MarkdownPlugin extends Plugin
                     $rendered = $this->parser->defaultTransform($rendered);
             }
 
-            $notice->rendered = $this->fix_whitespace($rendered);
+            $notice->rendered = common_purify($this->fix_whitespace($rendered));
         }
 
         return true;
