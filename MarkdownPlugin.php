@@ -19,10 +19,11 @@ class MarkdownPlugin extends Plugin
         $text = common_remove_unicode_formatting($text);
 
         $text = preg_replace('/[\x{0}-\x{8}\x{b}-\x{c}\x{e}-\x{19}]/', '', $text);
+        $text = common_replace_urls_callback($text, 'common_linkify');
 
         // Link #hashtags
         $rendered = preg_replace_callback('/(^|\&quot\;|\'|\(|\[|\{|\s+)#([\pL\pN_\-\.]{1,64})/u',
-            function ($m) { return "{$m[1]}#".common_tag_link($m[2]); }, $text);
+                                          function ($m) { return "{$m[1]}#".common_tag_link($m[2]); }, $text);
 
         return $rendered;
     }
@@ -64,16 +65,19 @@ class MarkdownPlugin extends Plugin
                 $rendered = $repl_rendered;
             }
 
+            // handle Markdown link forms in order not to convert doubly.
+            $rendered = preg_replace('/\[([^]]+)\]\((<a [^>]+>)([^<]+)<\/a>\)/u', '\2\1</a>', $rendered);
+
             // Convert Markdown to HTML
             // TODO: Abstract the parser so we can call the same method regardless of lib
             switch($this->parser) {
-                case 'gfm':
-                    $this->parser = new \cebe\markdown\GithubMarkdown();
-                    $rendered = $this->parser->parse($rendered);
-                    break;
-                default:
-                    $this->parser = new \Michelf\Markdown();
-                    $rendered = $this->parser->defaultTransform($rendered);
+            case 'gfm':
+                $this->parser = new \cebe\markdown\GithubMarkdown();
+                $rendered = $this->parser->parse($rendered);
+                break;
+            default:
+                $this->parser = new \Michelf\Markdown();
+                $rendered = $this->parser->defaultTransform($rendered);
             }
 
             $notice->rendered = $this->fix_whitespace($rendered);
