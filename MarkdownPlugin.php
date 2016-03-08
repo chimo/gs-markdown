@@ -6,7 +6,7 @@ if (!defined('GNUSOCIAL')) {
 
 class MarkdownPlugin extends Plugin
 {
-    const VERSION = '0.0.7';
+    const VERSION = '0.0.8';
 
     // From /lib/util.php::common_render_text
     // We don't want to call it directly since we don't want to
