@@ -7,6 +7,7 @@ if (!defined('GNUSOCIAL')) {
 class MarkdownPlugin extends Plugin
 {
     const VERSION = '0.0.8';
+    const NAME_SPACE = 'markdown'; // 'namespace' is a reserved keyword
 
     // From /lib/util.php::common_render_text
     // We don't want to call it directly since we don't want to
@@ -69,13 +70,30 @@ class MarkdownPlugin extends Plugin
      *
      * The remaining <br>s are taken care of by `common_strip_html()`
      */
-	function br2nl ($string)
-	{
+    function br2nl ($string)
+    {
         return preg_replace('/(\<br(\s*)?\/?\>){2}/i', PHP_EOL, $string);
-	}
+    }
 
     function onStartNoticeSave($notice)
     {
+        $currentUser = common_current_user();
+        $currentProfile = null;
+        $isEnabled = false;
+
+        try {
+            $currentProfile = $currentUser->getProfile();
+            $isEnabled = Profile_prefs::getData($currentProfile, MarkdownPlugin::NAME_SPACE, 'enabled', false);
+        } catch(UserNoProfileException $e) {
+            // Current user doesn't have a profile for whatever reason.
+            // Don't perform markdown transformation
+            $isEnabled = false;
+        }
+
+        if (!$isEnabled) {
+            return true;
+        }
+
         $text = common_strip_html($this->br2nl($notice->rendered), true, true);
 
         // Only run this on local notices
@@ -125,6 +143,25 @@ class MarkdownPlugin extends Plugin
     function onEndShowStyles($action)
     {
         $action->cssLink($this->path('css/markdown.css'));
+    }
+
+    function onEndAccountSettingsNav($action) {
+        $action->elementStart('li');
+        $action->element('a', array('href' => common_local_url('markdownsettings')), 'Markdown');
+        $action->elementEnd('li');
+
+        return true;
+    }
+
+    function onRouterInitialized($m)
+    {
+        $m->connect(
+            'settings/markdownsettings', array(
+                'action' => 'markdownsettings'
+            )
+        );
+
+        return true;
     }
 
     function onPluginVersion(array &$versions)
