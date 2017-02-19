@@ -1,5 +1,12 @@
 ## Instructions
 
+### Activate the feature for your user account
+
+Because the markdown plugin changes the way notices are rendered significantly,
+it is disabled by default.
+
+Users can activate the plugin for their account in the "Settings > Markdown" section.
+
 ### Built-in markdown parser
 
 Make sure the files are in a folder called `Markdown` if they're not already  
