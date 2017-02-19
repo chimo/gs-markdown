@@ -6,7 +6,7 @@ if (!defined('GNUSOCIAL')) {
 
 class MarkdownPlugin extends Plugin
 {
-    const VERSION = '0.0.8';
+    const VERSION = '0.0.9';
     const NAME_SPACE = 'markdown'; // 'namespace' is a reserved keyword
 
     // From /lib/util.php::common_render_text
@@ -134,25 +134,22 @@ class MarkdownPlugin extends Plugin
 
     function onStartNoticeSave($notice)
     {
-        $currentUser = common_current_user();
-        $currentProfile = null;
-        $isEnabled = false;
-
-        try {
-            $currentProfile = $currentUser->getProfile();
-            $isEnabled = Profile_prefs::getData($currentProfile, MarkdownPlugin::NAME_SPACE, 'enabled', false);
-        } catch(UserNoProfileException $e) {
-            // Current user doesn't have a profile for whatever reason.
-            // Don't perform markdown transformation
-            $isEnabled = false;
-        }
-
-        if (!$isEnabled) {
-            return true;
-        }
-
         // Only run this on local notices
         if ($notice->isLocal()) {
+            // Get the profile of the user who posted this notice
+            $profile = Profile::getKV('id', $notice->profile_id);
+
+            // Check if they have 'Markdown' enabled in their settings
+            if ($profile instanceof Profile) {
+                $isEnabled = Profile_prefs::getData($profile, MarkdownPlugin::NAME_SPACE, 'enabled', false);
+            } else {
+                $isEnabled = false;
+            }
+
+            if (!$isEnabled) {
+                return true;
+            }
+
             $notice->rendered = $this->markdownify($notice->rendered, $notice);
         }
 
