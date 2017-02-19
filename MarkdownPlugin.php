@@ -39,7 +39,6 @@ class MarkdownPlugin extends Plugin
         return preg_replace('/<br><br>$/', '', $rendered);
     }
 
-
     /**
      * Replace double <br>s with a line-break
      *
@@ -75,6 +74,64 @@ class MarkdownPlugin extends Plugin
         return preg_replace('/(\<br(\s*)?\/?\>){2}/i', PHP_EOL, $string);
     }
 
+    function onChrStartRenderNotice(&$raw_content, $profile, &$render)
+    {
+        $isEnabled = Profile_prefs::getData($profile, MarkdownPlugin::NAME_SPACE, 'enabled', false);
+
+        if (!$isEnabled) {
+            return true;
+        }
+
+        $rendered = common_render_content($raw_content, $profile);
+
+        $raw_content = $this->markdownify($rendered);
+        $render = false;
+
+        return true;
+    }
+
+    function markdownify($rendered_str, $notice=null)
+    {
+        $text = common_strip_html($this->br2nl($rendered_str), true, true);
+
+        $rendered = $this->render_text($text);
+
+        // Some types of notices do not have the hasParent() method, but they're not notices we are interested in
+        if (method_exists($notice, 'hasParent')) {
+            // Link @mentions, !mentions, @#mentions
+            $rendered = common_linkify_mentions($rendered, $notice->getProfile(), $notice->hasParent() ? $notice->getParent() : null);
+        }
+
+        // Prevent leading #hashtags from becoming headers by adding a backslash
+        // before the "#", telling markdown to leave it alone
+        $repl_rendered = preg_replace('/^#<span class="tag">/u', '\\\\\\0', $rendered);
+
+        // Only use the replaced value from above if it returned a success
+        if ($rendered !== null) {
+            $rendered = $repl_rendered;
+        }
+
+        // handle Markdown link forms in order not to convert doubly.
+        $rendered = preg_replace('/\[([^]]+)\]\((<a [^>]+>)([^<]+)<\/a>\)/u', '\2\1</a>', $rendered);
+
+        // Convert Markdown to HTML
+        // TODO: Abstract the parser so we can call the same method regardless of lib
+        switch($this->parser) {
+            case 'gfm':
+                // Composer
+                require __DIR__ . '/vendor/autoload.php';
+
+                $this->parser = new \cebe\markdown\GithubMarkdown();
+                $rendered = $this->parser->parse($rendered);
+                break;
+            default:
+                $this->parser = new \Michelf\Markdown();
+                $rendered = $this->parser->defaultTransform($rendered);
+        }
+
+        return common_purify($this->fix_whitespace($rendered));
+    }
+
     function onStartNoticeSave($notice)
     {
         $currentUser = common_current_user();
@@ -94,47 +151,9 @@ class MarkdownPlugin extends Plugin
             return true;
         }
 
-        $text = common_strip_html($this->br2nl($notice->rendered), true, true);
-
         // Only run this on local notices
         if ($notice->isLocal()) {
-
-            $rendered = $this->render_text($text);
-
-            // Some types of notices do not have the hasParent() method, but they're not notices we are interested in
-            if (method_exists($notice, 'hasParent')) {
-                // Link @mentions, !mentions, @#mentions
-                $rendered = common_linkify_mentions($rendered, $notice->getProfile(), $notice->hasParent() ? $notice->getParent() : null);
-            }
-
-            // Prevent leading #hashtags from becoming headers by adding a backslash
-            // before the "#", telling markdown to leave it alone
-            $repl_rendered = preg_replace('/^#<span class="tag">/u', '\\\\\\0', $rendered);
-
-            // Only use the replaced value from above if it returned a success
-            if ($rendered !== null) {
-                $rendered = $repl_rendered;
-            }
-
-            // handle Markdown link forms in order not to convert doubly.
-            $rendered = preg_replace('/\[([^]]+)\]\((<a [^>]+>)([^<]+)<\/a>\)/u', '\2\1</a>', $rendered);
-
-            // Convert Markdown to HTML
-            // TODO: Abstract the parser so we can call the same method regardless of lib
-            switch($this->parser) {
-                case 'gfm':
-                    // Composer
-                    require __DIR__ . '/vendor/autoload.php';
-
-                    $this->parser = new \cebe\markdown\GithubMarkdown();
-                    $rendered = $this->parser->parse($rendered);
-                    break;
-                default:
-                    $this->parser = new \Michelf\Markdown();
-                    $rendered = $this->parser->defaultTransform($rendered);
-            }
-
-            $notice->rendered = common_purify($this->fix_whitespace($rendered));
+            $notice->rendered = $this->markdownify($notice->rendered, $notice);
         }
 
         return true;
