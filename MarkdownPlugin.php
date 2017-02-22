@@ -114,6 +114,11 @@ class MarkdownPlugin extends Plugin
         // handle Markdown link forms in order not to convert doubly.
         $rendered = preg_replace('/\[([^]]+)\]\((<a [^>]+>)([^<]+)<\/a>\)/u', '\2\1</a>', $rendered);
 
+        // Silence 'undefined property' error in logs
+        if (!isset($this->parser)) {
+            $this->parser = null;
+        }
+
         // Convert Markdown to HTML
         // TODO: Abstract the parser so we can call the same method regardless of lib
         switch($this->parser) {
