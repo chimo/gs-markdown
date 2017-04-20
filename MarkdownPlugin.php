@@ -27,12 +27,17 @@ class MarkdownPlugin extends Plugin
 
         // Link #hashtags
         $rendered = preg_replace_callback('/(^|\&quot\;|\'|\(|\[|\{|\s+)#([\pL\pN_\-\.]{1,64})/u',
-                                          function ($m) { return "{$m[1]}#".common_tag_link($m[2]); }, $text);
+                                      function ($m) { return "{$m[1]}#".common_tag_link($m[2]); }, $text);
 
         return $rendered;
     }
 
-    // See: https://github.com/chimo/gs-markdown/issues/10
+    /**
+     * Replace paragraph tags with double <br>s
+     *
+     * Some clients (ex: AndStatus) display extra whitespace when the
+     * notice is wrapped or ends with a <p> tag (GS doesn't wrap notices in <p> tags)
+     */
     function fix_whitespace($rendered)
     {
         // Remove <p>s
@@ -109,10 +114,12 @@ class MarkdownPlugin extends Plugin
             $rendered = $this->render_text($text);
         }
 
-        // Some types of notices do not have the hasParent() method, but they're not notices we are interested in
+        // Some types of notices do not have the hasParent() method,
+        // but they're not notices we are interested in
         if (method_exists($notice, 'hasParent')) {
             // Link @mentions, !mentions, @#mentions
-            $rendered = common_linkify_mentions($rendered, $notice->getProfile(), $notice->hasParent() ? $notice->getParent() : null);
+            $rendered = common_linkify_mentions($rendered, $notice->getProfile(),
+                                            $notice->hasParent() ? $notice->getParent() : null);
         }
 
         // Prevent leading #hashtags from becoming headers by adding a backslash
