@@ -9,6 +9,13 @@ class MarkdownPlugin extends Plugin
     const VERSION = '0.0.9';
     const NAME_SPACE = 'markdown'; // 'namespace' is a reserved keyword
 
+    function initialize()
+    {
+        if (!isset($this->parser)) {
+            $this->parser = 'default';
+        }
+    }
+
     // From /lib/util.php::common_render_text
     // We don't want to call it directly since we don't want to
     // run common_linkify() on the text
@@ -17,7 +24,6 @@ class MarkdownPlugin extends Plugin
         $text = common_remove_unicode_formatting($text);
 
         $text = preg_replace('/[\x{0}-\x{8}\x{b}-\x{c}\x{e}-\x{19}]/', '', $text);
-        $text = common_replace_urls_callback($text, 'common_linkify');
 
         // Link #hashtags
         $rendered = preg_replace_callback('/(^|\&quot\;|\'|\(|\[|\{|\s+)#([\pL\pN_\-\.]{1,64})/u',
@@ -94,7 +100,14 @@ class MarkdownPlugin extends Plugin
     {
         $text = common_strip_html($this->br2nl($rendered_str), true, true);
 
-        $rendered = $this->render_text($text);
+        if ($this->parser === 'default') {
+            $rendered = common_render_text($text);
+
+            // handle Markdown links in order not to convert doubly.
+            $rendered = preg_replace('/\[([^]]+)\]\((<a [^>]+>)([^<]+)<\/a>\)/u', '\2\1</a>', $rendered);
+        } else {
+            $rendered = $this->render_text($text);
+        }
 
         // Some types of notices do not have the hasParent() method, but they're not notices we are interested in
         if (method_exists($notice, 'hasParent')) {
@@ -109,14 +122,6 @@ class MarkdownPlugin extends Plugin
         // Only use the replaced value from above if it returned a success
         if ($rendered !== null) {
             $rendered = $repl_rendered;
-        }
-
-        // handle Markdown link forms in order not to convert doubly.
-        $rendered = preg_replace('/\[([^]]+)\]\((<a [^>]+>)([^<]+)<\/a>\)/u', '\2\1</a>', $rendered);
-
-        // Silence 'undefined property' error in logs
-        if (!isset($this->parser)) {
-            $this->parser = null;
         }
 
         // Convert Markdown to HTML
