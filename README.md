@@ -1,4 +1,9 @@
-## Instructions
+# Use Markdown in your GNU social notices
+
+## Installation
+
+1. Navigate to your `/local/plugins` directory (create it if it doesn't exist)
+1. `git clone https://github.com/chimo/gs-markdown.git Markdown`
 
 ### Activate the feature for your user account
 
