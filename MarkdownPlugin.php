@@ -6,7 +6,7 @@ if (!defined('GNUSOCIAL')) {
 
 class MarkdownPlugin extends Plugin
 {
-    const VERSION = '0.0.9';
+    const VERSION = '0.0.10';
     const NAME_SPACE = 'markdown'; // 'namespace' is a reserved keyword
 
     function initialize()
@@ -171,6 +171,14 @@ class MarkdownPlugin extends Plugin
         }
 
         return true;
+    }
+
+    function onEndShowNoticeFormData($action)
+    {
+        $action->elementStart('div', array('class' => 'notice_data-markdown_wrap'));
+        $action->element('input', array('class' => 'checkbox', 'id' => 'markdown', 'type' => 'checkbox'));
+        $action->element('label', array('class' => 'notice_data-markdown', 'for' => 'markdown'), 'Parse this notice as markdown');
+        $action->elementEnd('div');
     }
 
     function onEndShowStyles($action)

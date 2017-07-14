@@ -1,3 +1,24 @@
 #notices_primary .e-content h2 {
     display: block;
 }
+
+.notice_data-markdown {
+    background: url("../images/markdown-disabled.png") no-repeat top left;
+    cursor: pointer;
+    display: block;
+    height: 16px;
+    position: absolute;
+    right: 0;
+    text-indent: -9999px;
+    top: 52px;
+    width: 16px;
+    z-index: 99;
+}
+
+.notice_data-markdown_wrap input {
+    visibility: hidden;
+}
+
+.notice_data-markdown_wrap .checkbox:checked + .notice_data-markdown {
+    background: url("../images/markdown-enabled.png") no-repeat top left;
+}
