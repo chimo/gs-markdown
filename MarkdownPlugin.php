@@ -8,7 +8,7 @@ require __DIR__ . '/lib/MarkdownProfileBlock.php';
 
 class MarkdownPlugin extends Plugin
 {
-    const VERSION = '0.1.0';
+    const VERSION = '0.1.1';
     const NAME_SPACE = 'markdown'; // 'namespace' is a reserved keyword
 
     function initialize()
@@ -62,29 +62,32 @@ class MarkdownPlugin extends Plugin
      *      * item
      *
      * Has `$notice->rendered` like this:
-     *      Foo<br><br>
+     *      Foo<br>
+     *      <br>
      *      * list<br>
      *      * item
      *
      * Turns into this after `common_strip_html()`:
      *      Foo
-     *      * list
-     *      * item
      *
-     * So we lose the blank line required by markdown to parse
-     * the input as a list.
+     *
+     *      * list
+     *
+     *      * item
      *
      * This method takes the original `$notice->rendered` and makes it like this:
      *      Foo
      *
-     *      * list<br>
-     *      * item<br>
-     *
-     * The remaining <br>s are taken care of by `common_strip_html()`
+     *      * list
+     *      * item
      */
     function br2nl ($string)
     {
-        return preg_replace('/(\<br(\s*)?\/?\>){2}/i', PHP_EOL, $string);
+        // Replace double <br>s with just one EOL
+        $string = preg_replace('/(\<br(\s*)?\/?\>\n<br(\s*)?\/?\>)/i', PHP_EOL, $string);
+
+        // Remove <br>s
+        return preg_replace('/(\<br(\s*)?\/?\>)/i', '', $string);
     }
 
     function onChrStartRenderNotice(&$raw_content, $profile, &$render)
@@ -108,7 +111,9 @@ class MarkdownPlugin extends Plugin
         $text = common_strip_html($this->br2nl($rendered_str), true, true);
 
         if ($this->parser === 'default') {
-            $rendered = common_render_text($text);
+            $rendered = $this->render_text($text);
+
+            $rendered = common_replace_urls_callback($text, 'common_linkify');
 
             // handle Markdown links in order not to convert doubly.
             $rendered = preg_replace('/\[([^]]+)\]\((<a [^>]+>)([^<]+)<\/a>\)/u', '\2\1</a>', $rendered);
