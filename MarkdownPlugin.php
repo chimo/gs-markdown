@@ -4,9 +4,11 @@ if (!defined('GNUSOCIAL')) {
     exit(1);
 }
 
+require __DIR__ . '/lib/MarkdownProfileBlock.php';
+
 class MarkdownPlugin extends Plugin
 {
-    const VERSION = '0.0.9';
+    const VERSION = '0.1.0';
     const NAME_SPACE = 'markdown'; // 'namespace' is a reserved keyword
 
     function initialize()
@@ -147,6 +149,15 @@ class MarkdownPlugin extends Plugin
         }
 
         return common_purify($this->fix_whitespace($rendered));
+    }
+
+    function onStartShowAccountProfileBlock($action, $profile)
+    {
+        $markdownProfile = new MarkdownProfileBlock($action, $profile);
+
+        $markdownProfile->show();
+
+        return false;
     }
 
     function onStartNoticeSave($notice)
