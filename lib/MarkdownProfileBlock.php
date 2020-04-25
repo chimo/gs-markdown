@@ -4,40 +4,19 @@ if (!defined('GNUSOCIAL')) {
     exit(1);
 }
 
-class MarkdownProfileBlock extends ProfileBlock
+class MarkdownProfileBlock extends AccountProfileBlock
 {
-    protected $profile;
+    protected $profile = null;
 
     function __construct(Action $out, Profile $profile)
     {
-        parent::__construct($out);
+        parent::__construct($out, $profile);
 
         $this->profile = $profile;
     }
 
-    function name()
-    {
-        return $this->profile->getBestName();
-    }
-
-    function url()
-    {
-        return $this->profile->profileurl;
-    }
-
-    function location()
-    {
-        return $this->profile->location;
-    }
-
-    function homepage()
-    {
-        return $this->profile->homepage;
-    }
-
-    function description()
-    {
-        return $this->profile->bio;
+    function show() {
+	    ProfileBlock::show();
     }
 
     function showDescription()

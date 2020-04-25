@@ -213,7 +213,7 @@ class MarkdownPlugin extends Plugin
         return true;
     }
 
-    function onPluginVersion(array &$versions)
+    function onPluginVersion(array &$versions): bool
     {
         $versions[] = array('name' => 'Markdown',
                             'version' => self::VERSION,
